@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Tube Color Detection Appv1</title>
+    <title>Test Tube Color Detection Appv2</title>
 </head>
 <body>
-    <h1>Test Tube Color Detection Appv1</h1>
+    <h1>Test Tube Color Detection Appv2</h1>
     <input type="file" id="inputImage" accept="image/*">
     <canvas id="originalCanvas"></canvas>
     <canvas id="filteredCanvas"></canvas>
+
+    <div id="colorOutput"></div>
 
     <script>
         const inputImage = document.getElementById('inputImage');
         const originalCanvas = document.getElementById('originalCanvas');
         const filteredCanvas = document.getElementById('filteredCanvas');
+        const colorOutput = document.getElementById('colorOutput');
 
         inputImage.addEventListener('change', function(event) {
             const file = event.target.files[0];
@@ -29,15 +32,18 @@
                         const ctxOriginal = originalCanvas.getContext('2d');
                         const ctxFiltered = filteredCanvas.getContext('2d');
                         
-                        // Clear any existing drawings on the filtered canvas
+                        // Clear the filtered canvas
                         ctxFiltered.clearRect(0, 0, filteredCanvas.width, filteredCanvas.height);
                         
                         // Draw the original image onto the original canvas
                         ctxOriginal.drawImage(img, 0, 0);
 
-                        // Get image data for color manipulation
                         const imageData = ctxOriginal.getImageData(0, 0, img.width, img.height);
                         const data = imageData.data;
+
+                        // Initialize an array to store the color outputs
+                        let colorList = [];
+                        let tubeCount = 1;
 
                         // Loop through each pixel to detect pink and yellow
                         for (let i = 0; i < data.length; i += 4) {
@@ -45,23 +51,30 @@
                             const g = data[i + 1];
                             const b = data[i + 2];
 
-                            // Pink detection (high red and blue values, low green)
+                            // Check for pink (high red and blue, low green)
                             if (r > 150 && g < 100 && b > 150) {
                                 data[i] = 255;   // Red
                                 data[i + 1] = 0; // Green
-                                data[i + 2] = 255; // Blue (pure pink)
+                                data[i + 2] = 255; // Blue (pink color)
+                                colorList.push(`${tubeCount}. pink`); // Add to output list
                             }
-                            // Yellow detection (high red and green, low blue)
+                            // Check for yellow (high red and green, low blue)
                             else if (r > 150 && g > 150 && b < 100) {
                                 data[i] = 255;   // Red
                                 data[i + 1] = 255; // Green
-                                data[i + 2] = 0; // Blue (pure yellow)
+                                data[i + 2] = 0; // Blue (yellow color)
+                                colorList.push(`${tubeCount}. yellow`); // Add to output list
                             }
-                            // Otherwise leave the color as is (for transparency/other colors)
+                            tubeCount++;
                         }
 
-                        // Put the modified image data (filtered image) on the second canvas
+                        // Put the filtered image onto the second canvas
                         ctxFiltered.putImageData(imageData, 0, 0);
+
+                        // Output the color list as text
+                        colorOutput.innerHTML = "<h2>Detected Test Tubes Colors:</h2><ol>" + 
+                            colorList.map(item => `<li>${item}</li>`).join('') + 
+                            "</ol>";
                     };
                     img.src = e.target.result;
                 };
