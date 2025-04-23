@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Tube Color Detection Appv3</title>
+    <title>Test Tube Color Detection Appv1</title>
 </head>
 <body>
-    <h1>Test Tube Color Detection Appv3</h1>
+    <h1>Test Tube Color Detection Appv1</h1>
     <input type="file" id="inputImage" accept="image/*">
     <canvas id="originalCanvas"></canvas>
     <canvas id="filteredCanvas"></canvas>
@@ -41,56 +41,87 @@
                         const imageData = ctxOriginal.getImageData(0, 0, img.width, img.height);
                         const data = imageData.data;
 
-                        // Initialize an array to store the color outputs
                         let colorList = [];
                         let tubeCount = 1;
 
-                        // This will store the regions of detected colors
-                        let regions = [];
+                        // Use a simple thresholding to create distinct regions of color
+                        let visited = new Array(data.length / 4).fill(false); // To mark visited pixels
+                        const getIndex = (x, y, width) => (y * width + x) * 4;
 
-                        // Loop through each pixel to detect pink and yellow and group regions
-                        for (let i = 0; i < data.length; i += 4) {
-                            const r = data[i];
-                            const g = data[i + 1];
-                            const b = data[i + 2];
+                        function floodFill(x, y, color) {
+                            let queue = [{x, y}];
+                            let regionPixels = [];
+                            const colorRanges = {
+                                pink: {r: [150, 255], g: [0, 100], b: [150, 255]},
+                                yellow: {r: [150, 255], g: [150, 255], b: [0, 100]}
+                            };
 
-                            // Check for pink (high red and blue, low green)
-                            if (r > 150 && g < 100 && b > 150) {
-                                // Mark the region as pink
-                                regions.push({ index: i, color: 'pink' });
-                                data[i] = 255;   // Red
-                                data[i + 1] = 0; // Green
-                                data[i + 2] = 255; // Blue (pure pink)
+                            while (queue.length) {
+                                const {x, y} = queue.pop();
+                                const idx = getIndex(x, y, img.width);
+                                if (visited[Math.floor(idx / 4)]) continue;
+
+                                visited[Math.floor(idx / 4)] = true;
+
+                                const r = data[idx];
+                                const g = data[idx + 1];
+                                const b = data[idx + 2];
+
+                                // Check if the current pixel matches the desired color range
+                                const inRange = color === 'pink' 
+                                    ? r >= colorRanges.pink.r[0] && r <= colorRanges.pink.r[1] 
+                                        && g >= colorRanges.pink.g[0] && g <= colorRanges.pink.g[1]
+                                        && b >= colorRanges.pink.b[0] && b <= colorRanges.pink.b[1]
+                                    : r >= colorRanges.yellow.r[0] && r <= colorRanges.yellow.r[1] 
+                                        && g >= colorRanges.yellow.g[0] && g <= colorRanges.yellow.g[1]
+                                        && b >= colorRanges.yellow.b[0] && b <= colorRanges.yellow.b[1];
+
+                                if (inRange) {
+                                    regionPixels.push({x, y});
+                                    // Add neighboring pixels
+                                    if (x + 1 < img.width) queue.push({x: x + 1, y});
+                                    if (y + 1 < img.height) queue.push({x, y: y + 1});
+                                    if (x - 1 >= 0) queue.push({x: x - 1, y});
+                                    if (y - 1 >= 0) queue.push({x, y: y - 1});
+                                }
                             }
-                            // Check for yellow (high red and green, low blue)
-                            else if (r > 150 && g > 150 && b < 100) {
-                                // Mark the region as yellow
-                                regions.push({ index: i, color: 'yellow' });
-                                data[i] = 255;   // Red
-                                data[i + 1] = 255; // Green
-                                data[i + 2] = 0; // Blue (pure yellow)
+
+                            return regionPixels;
+                        }
+
+                        // Process each pixel to find distinct color regions
+                        for (let y = 0; y < img.height; y++) {
+                            for (let x = 0; x < img.width; x++) {
+                                if (visited[getIndex(x, y, img.width) / 4]) continue;
+
+                                const idx = getIndex(x, y, img.width);
+                                const r = data[idx];
+                                const g = data[idx + 1];
+                                const b = data[idx + 2];
+
+                                // Check for pink or yellow colors
+                                if (r > 150 && g < 100 && b > 150) {
+                                    // Flood fill for pink region
+                                    const regionPixels = floodFill(x, y, 'pink');
+                                    if (regionPixels.length > 0) {
+                                        colorList.push(`${tubeCount}. pink`);
+                                        tubeCount++;
+                                    }
+                                } else if (r > 150 && g > 150 && b < 100) {
+                                    // Flood fill for yellow region
+                                    const regionPixels = floodFill(x, y, 'yellow');
+                                    if (regionPixels.length > 0) {
+                                        colorList.push(`${tubeCount}. yellow`);
+                                        tubeCount++;
+                                    }
+                                }
                             }
                         }
 
-                        // Group the regions by color and eliminate duplicates
-                        let colorCounts = { pink: 0, yellow: 0 };
-
-                        // Iterate through the regions and count each color's occurrences
-                        regions.forEach(region => {
-                            colorCounts[region.color]++;
-                        });
-
-                        // Output only one result per tube based on the majority color detected
-                        if (colorCounts.pink > colorCounts.yellow) {
-                            colorList.push(`${tubeCount}. pink`);
-                        } else if (colorCounts.yellow > colorCounts.pink) {
-                            colorList.push(`${tubeCount}. yellow`);
-                        }
-
-                        // Put the filtered image onto the second canvas
+                        // Update the filtered canvas with the processed image
                         ctxFiltered.putImageData(imageData, 0, 0);
 
-                        // Output the color list as text
+                        // Output the detected test tube colors
                         colorOutput.innerHTML = "<h2>Detected Test Tubes Colors:</h2><ol>" + 
                             colorList.map(item => `<li>${item}</li>`).join('') + 
                             "</ol>";
