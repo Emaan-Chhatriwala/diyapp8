@@ -44,7 +44,7 @@
       const { data, width, height } = imageData;
       const result = [];
 
-      const tubeCount = 8; // change this depending on how many test tubes you have
+      const tubeCount = 8; // Adjust this based on the number of tubes
       const tubeWidth = Math.floor(width / tubeCount);
 
       for (let i = 0; i < tubeCount; i++) {
@@ -59,11 +59,16 @@
             const g = data[index + 1];
             const b = data[index + 2];
 
-            if (r > 180 && g < 100 && b > 180) pinkScore++;
-            else if (r > 200 && g > 100 && b < 100) orangeScore++;
+            // Adjusted color thresholds for more flexibility
+            if (r > 150 && g < 100 && b > 150) {
+              pinkScore++; // Detect pink (higher red and blue, low green)
+            } else if (r > 150 && g > 100 && b < 100) {
+              orangeScore++; // Detect orange (higher red and green, low blue)
+            }
           }
         }
 
+        // Compare scores and determine the color for the tube
         result.push(pinkScore > orangeScore ? "Pink" : "Orange");
       }
 
