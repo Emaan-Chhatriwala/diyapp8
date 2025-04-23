@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Tube Color Detection Appv2</title>
+    <title>Test Tube Color Detection App</title>
 </head>
 <body>
-    <h1>Test Tube Color Detection Appv2</h1>
+    <h1>Test Tube Color Detection App</h1>
     <input type="file" id="inputImage" accept="image/*">
     <canvas id="originalCanvas"></canvas>
     <canvas id="filteredCanvas"></canvas>
@@ -45,7 +45,10 @@
                         let colorList = [];
                         let tubeCount = 1;
 
-                        // Loop through each pixel to detect pink and yellow
+                        // This will store the regions of detected colors
+                        let regions = [];
+
+                        // Loop through each pixel to detect pink and yellow and group regions
                         for (let i = 0; i < data.length; i += 4) {
                             const r = data[i];
                             const g = data[i + 1];
@@ -53,19 +56,35 @@
 
                             // Check for pink (high red and blue, low green)
                             if (r > 150 && g < 100 && b > 150) {
+                                // Mark the region as pink
+                                regions.push({ index: i, color: 'pink' });
                                 data[i] = 255;   // Red
                                 data[i + 1] = 0; // Green
-                                data[i + 2] = 255; // Blue (pink color)
-                                colorList.push(`${tubeCount}. pink`); // Add to output list
+                                data[i + 2] = 255; // Blue (pure pink)
                             }
                             // Check for yellow (high red and green, low blue)
                             else if (r > 150 && g > 150 && b < 100) {
+                                // Mark the region as yellow
+                                regions.push({ index: i, color: 'yellow' });
                                 data[i] = 255;   // Red
                                 data[i + 1] = 255; // Green
-                                data[i + 2] = 0; // Blue (yellow color)
-                                colorList.push(`${tubeCount}. yellow`); // Add to output list
+                                data[i + 2] = 0; // Blue (pure yellow)
                             }
-                            tubeCount++;
+                        }
+
+                        // Group the regions by color and eliminate duplicates
+                        let colorCounts = { pink: 0, yellow: 0 };
+
+                        // Iterate through the regions and count each color's occurrences
+                        regions.forEach(region => {
+                            colorCounts[region.color]++;
+                        });
+
+                        // Output only one result per tube based on the majority color detected
+                        if (colorCounts.pink > colorCounts.yellow) {
+                            colorList.push(`${tubeCount}. pink`);
+                        } else if (colorCounts.yellow > colorCounts.pink) {
+                            colorList.push(`${tubeCount}. yellow`);
                         }
 
                         // Put the filtered image onto the second canvas
