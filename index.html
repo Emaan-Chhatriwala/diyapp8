@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Tube Color Detection Appv1</title>
+    <title>Test Tube Color Detection App</title>
 </head>
 <body>
-    <h1>Test Tube Color Detection Appv1</h1>
+    <h1>Test Tube Color Detection App</h1>
     <input type="file" id="inputImage" accept="image/*">
     <canvas id="originalCanvas"></canvas>
     <canvas id="filteredCanvas"></canvas>
@@ -90,6 +90,7 @@
                         }
 
                         // Process each pixel to find distinct color regions
+                        let detectedTestTubes = [];
                         for (let y = 0; y < img.height; y++) {
                             for (let x = 0; x < img.width; x++) {
                                 if (visited[getIndex(x, y, img.width) / 4]) continue;
@@ -104,18 +105,30 @@
                                     // Flood fill for pink region
                                     const regionPixels = floodFill(x, y, 'pink');
                                     if (regionPixels.length > 0) {
-                                        colorList.push(`${tubeCount}. pink`);
-                                        tubeCount++;
+                                        detectedTestTubes.push('pink');
+                                        if (detectedTestTubes.length <= 8) {
+                                            colorList.push(`${tubeCount}. pink`);
+                                            tubeCount++;
+                                        }
                                     }
                                 } else if (r > 150 && g > 150 && b < 100) {
                                     // Flood fill for yellow region
                                     const regionPixels = floodFill(x, y, 'yellow');
                                     if (regionPixels.length > 0) {
-                                        colorList.push(`${tubeCount}. yellow`);
-                                        tubeCount++;
+                                        detectedTestTubes.push('yellow');
+                                        if (detectedTestTubes.length <= 8) {
+                                            colorList.push(`${tubeCount}. yellow`);
+                                            tubeCount++;
+                                        }
                                     }
                                 }
+
+                                // Stop when we've detected 8 tubes
+                                if (detectedTestTubes.length >= 8) {
+                                    break;
+                                }
                             }
+                            if (detectedTestTubes.length >= 8) break;
                         }
 
                         // Update the filtered canvas with the processed image
