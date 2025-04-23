@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Test Tube Color Detection AppV1</title>
+    <title>Test Tube Color Detection Appv1</title>
 </head>
 <body>
-    <h1>Test Tube Color Detection App</h1>
+    <h1>Test Tube Color Detection Appv1</h1>
     <input type="file" id="inputImage" accept="image/*">
     <canvas id="originalCanvas"></canvas>
     <canvas id="filteredCanvas"></canvas>
@@ -28,8 +28,14 @@
 
                         const ctxOriginal = originalCanvas.getContext('2d');
                         const ctxFiltered = filteredCanvas.getContext('2d');
+                        
+                        // Clear any existing drawings on the filtered canvas
+                        ctxFiltered.clearRect(0, 0, filteredCanvas.width, filteredCanvas.height);
+                        
+                        // Draw the original image onto the original canvas
                         ctxOriginal.drawImage(img, 0, 0);
 
+                        // Get image data for color manipulation
                         const imageData = ctxOriginal.getImageData(0, 0, img.width, img.height);
                         const data = imageData.data;
 
@@ -54,7 +60,7 @@
                             // Otherwise leave the color as is (for transparency/other colors)
                         }
 
-                        // Update the filtered canvas with new image data
+                        // Put the modified image data (filtered image) on the second canvas
                         ctxFiltered.putImageData(imageData, 0, 0);
                     };
                     img.src = e.target.result;
