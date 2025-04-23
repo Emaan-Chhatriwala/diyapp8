@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> 
-    <title>Test Tube Color Detection App</title>
+<head>
+    <title>Test Tube Color Detection AppV1</title>
 </head>
 <body>
     <h1>Test Tube Color Detection App</h1>
@@ -33,26 +33,28 @@
                         const imageData = ctxOriginal.getImageData(0, 0, img.width, img.height);
                         const data = imageData.data;
 
-                        // Color detection: For pink and yellow
+                        // Loop through each pixel to detect pink and yellow
                         for (let i = 0; i < data.length; i += 4) {
                             const r = data[i];
                             const g = data[i + 1];
                             const b = data[i + 2];
 
-                            // Detect pink (high red and blue, low green)
+                            // Pink detection (high red and blue values, low green)
                             if (r > 150 && g < 100 && b > 150) {
-                                data[i] = 255; // Red
+                                data[i] = 255;   // Red
                                 data[i + 1] = 0; // Green
-                                data[i + 2] = 255; // Blue (pink color)
+                                data[i + 2] = 255; // Blue (pure pink)
                             }
-                            // Detect yellow (high red and green, low blue)
+                            // Yellow detection (high red and green, low blue)
                             else if (r > 150 && g > 150 && b < 100) {
-                                data[i] = 255; // Red
+                                data[i] = 255;   // Red
                                 data[i + 1] = 255; // Green
-                                data[i + 2] = 0; // Blue (yellow color)
+                                data[i + 2] = 0; // Blue (pure yellow)
                             }
+                            // Otherwise leave the color as is (for transparency/other colors)
                         }
 
+                        // Update the filtered canvas with new image data
                         ctxFiltered.putImageData(imageData, 0, 0);
                     };
                     img.src = e.target.result;
